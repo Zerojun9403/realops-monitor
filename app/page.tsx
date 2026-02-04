@@ -1,127 +1,565 @@
 "use client";
 
-import { useState } from "react";
-import { Moon, Sun, Cpu, HardDrive, Activity, Network } from "lucide-react";
+import { useState, useEffect } from "react";
+import {
+  Moon,
+  Sun,
+  Cpu,
+  HardDrive,
+  Activity,
+  Network,
+  Server,
+  Zap,
+  AlertTriangle,
+  Wifi,
+} from "lucide-react";
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  RadialBarChart,
+  RadialBar,
+} from "recharts";
+
+const generateChartData = () => {
+  const data = [];
+  for (let i = 0; i < 30; i++) {
+    data.push({
+      time: `${i}s`,
+      cpu: Math.floor(Math.random() * 40) + 30,
+      memory: Math.floor(Math.random() * 30) + 50,
+      network: Math.floor(Math.random() * 60) + 40,
+    });
+  }
+  return data;
+};
 
 export default function Home() {
   const [isDark, setIsDark] = useState(true);
+  const [chartData, setChartData] = useState(generateChartData());
+  const [metrics, setMetrics] = useState({
+    cpu: 45,
+    memory: 68,
+    disk: 82,
+    network: 124,
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMetrics({
+        cpu: Math.floor(Math.random() * 30) + 35,
+        memory: Math.floor(Math.random() * 20) + 60,
+        disk: Math.floor(Math.random() * 10) + 78,
+        network: Math.floor(Math.random() * 50) + 100,
+      });
+
+      setChartData((prev) => {
+        const newData = [
+          ...prev.slice(1),
+          {
+            time: `${prev.length}s`,
+            cpu: Math.floor(Math.random() * 40) + 30,
+            memory: Math.floor(Math.random() * 30) + 50,
+            network: Math.floor(Math.random() * 60) + 40,
+          },
+        ];
+        return newData;
+      });
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const toggleTheme = () => {
     setIsDark(!isDark);
     document.documentElement.classList.toggle("dark");
   };
 
+  const radialData = [
+    { name: "CPU", value: metrics.cpu, fill: "#00F0FF" },
+    { name: "Memory", value: metrics.memory, fill: "#FF006E" },
+    { name: "Disk", value: metrics.disk, fill: "#FFBE0B" },
+  ];
+
   return (
     <div className={isDark ? "dark" : ""}>
-      <main className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
-        {/* 헤더 */}
-        <header className="border-b border-gray-200 dark:border-gray-800">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Activity className="w-8 h-8 text-blue-500" />
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                RealOps Monitor
-              </h1>
-            </div>
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            >
-              {isDark ? (
-                <Sun className="w-5 h-5 text-yellow-500" />
-              ) : (
-                <Moon className="w-5 h-5 text-gray-600" />
-              )}
-            </button>
-          </div>
-        </header>
+      <main className="min-h-screen bg-black dark:bg-black transition-colors relative overflow-hidden">
+        {/* 사이버펑크 배경 그리드 */}
+        <div className="absolute inset-0 opacity-20">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `
+              linear-gradient(rgba(0, 240, 255, 0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(0, 240, 255, 0.1) 1px, transparent 1px)
+            `,
+              backgroundSize: "50px 50px",
+            }}
+          ></div>
+        </div>
 
-        {/* 메인 대시보드 */}
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* CPU 카드 */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  CPU
-                </h3>
-                <Cpu className="w-6 h-6 text-blue-500" />
-              </div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                45%
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div
-                  className="bg-blue-500 h-2 rounded-full"
-                  style={{ width: "45%" }}
-                ></div>
-              </div>
-            </div>
+        {/* 네온 글로우 효과 */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/30 rounded-full blur-[120px] animate-pulse"></div>
+        <div
+          className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-500/30 rounded-full blur-[120px] animate-pulse"
+          style={{ animationDelay: "1s" }}
+        ></div>
 
-            {/* Memory 카드 */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Memory
-                </h3>
-                <Activity className="w-6 h-6 text-green-500" />
-              </div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                68%
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div
-                  className="bg-green-500 h-2 rounded-full"
-                  style={{ width: "68%" }}
-                ></div>
-              </div>
-            </div>
+        <div className="relative z-10">
+          {/* 사이버펑크 헤더 */}
+          <header className="border-b border-cyan-500/30 backdrop-blur-md bg-black/50 sticky top-0 z-50">
+            <div className="container mx-auto px-4 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    {/* 글리치 효과 */}
+                    <div className="absolute inset-0 bg-cyan-500 blur-xl opacity-50 animate-pulse"></div>
+                    <Server
+                      className="relative w-10 h-10 text-cyan-400"
+                      style={{
+                        filter: "drop-shadow(0 0 10px rgba(0, 240, 255, 0.8))",
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <h1
+                      className="text-3xl font-black tracking-wider bg-gradient-to-r from-cyan-400 via-pink-500 to-yellow-400 bg-clip-text text-transparent uppercase"
+                      style={{
+                        textShadow: "0 0 20px rgba(0, 240, 255, 0.5)",
+                        fontFamily: "monospace",
+                      }}
+                    >
+                      REALOPS//MONITOR
+                    </h1>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div
+                        className="w-2 h-2 bg-green-400 rounded-full animate-pulse"
+                        style={{
+                          boxShadow: "0 0 10px rgba(34, 197, 94, 0.8)",
+                        }}
+                      ></div>
+                      <span className="text-xs text-green-400 font-mono uppercase tracking-widest">
+                        SYSTEM ONLINE // 2026.02.05
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
-            {/* Disk 카드 */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Disk
-                </h3>
-                <HardDrive className="w-6 h-6 text-purple-500" />
-              </div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                82%
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div
-                  className="bg-purple-500 h-2 rounded-full"
-                  style={{ width: "82%" }}
-                ></div>
-              </div>
-            </div>
+                <div className="flex items-center gap-4">
+                  {/* 상태 표시 */}
+                  <div className="hidden md:flex items-center gap-4 px-4 py-2 border border-cyan-500/30 rounded-lg bg-black/50">
+                    <div className="flex items-center gap-2">
+                      <Wifi className="w-4 h-4 text-cyan-400" />
+                      <span className="text-xs text-cyan-400 font-mono">
+                        LINK: STABLE
+                      </span>
+                    </div>
+                    <div className="w-px h-4 bg-cyan-500/30"></div>
+                    <div className="flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-pink-400" />
+                      <span className="text-xs text-pink-400 font-mono">
+                        REAL-TIME
+                      </span>
+                    </div>
+                  </div>
 
-            {/* Network 카드 */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Network
-                </h3>
-                <Network className="w-6 h-6 text-orange-500" />
-              </div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                124 MB/s
-              </div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                ↑ 45 MB/s ↓ 79 MB/s
+                  <button
+                    onClick={toggleTheme}
+                    className="p-2 border border-cyan-500/50 rounded-lg bg-black/50 hover:bg-cyan-500/20 transition-all"
+                    style={{ boxShadow: "0 0 20px rgba(0, 240, 255, 0.3)" }}
+                  >
+                    {isDark ? (
+                      <Sun className="w-5 h-5 text-yellow-400" />
+                    ) : (
+                      <Moon className="w-5 h-5 text-cyan-400" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          </header>
 
-          {/* 설명 */}
-          <div className="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-            <h2 className="text-xl font-bold text-blue-900 dark:text-blue-100 mb-2">
-              🎉 프로젝트 시작!
-            </h2>
-            <p className="text-blue-800 dark:text-blue-200">
-              첫 화면 완성! KT 데이터센터 3년 경험을 담은 실시간 모니터링
-              시스템입니다. 다크/라이트 모드 전환도 됩니다!
-            </p>
+          <div className="container mx-auto px-4 py-8">
+            {/* 메인 대시보드 그리드 */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+              {/* 왼쪽: 메트릭 카드들 */}
+              <div className="space-y-4">
+                {/* CPU */}
+                <div className="relative group">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg blur opacity-30 group-hover:opacity-60 transition duration-300"></div>
+                  <div className="relative border border-cyan-500/30 rounded-lg bg-black/80 backdrop-blur-xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Cpu className="w-5 h-5 text-cyan-400" />
+                        <span className="text-cyan-400 font-mono text-sm uppercase tracking-wider">
+                          CPU
+                        </span>
+                      </div>
+                      <div
+                        className="text-2xl font-bold text-cyan-400 font-mono tabular-nums"
+                        style={{
+                          textShadow: "0 0 10px rgba(0, 240, 255, 0.8)",
+                        }}
+                      >
+                        {metrics.cpu}%
+                      </div>
+                    </div>
+                    <div className="relative h-2 bg-gray-900 rounded-full overflow-hidden">
+                      <div
+                        className="absolute h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-500"
+                        style={{
+                          width: `${metrics.cpu}%`,
+                          boxShadow: "0 0 10px rgba(0, 240, 255, 0.8)",
+                        }}
+                      ></div>
+                    </div>
+                    <div className="mt-2 text-xs text-gray-500 font-mono">
+                      {metrics.cpu > 70 ? (
+                        <span className="text-yellow-400 flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" /> WARNING: HIGH
+                        </span>
+                      ) : (
+                        <span className="text-green-400">STATUS: OPTIMAL</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Memory */}
+                <div className="relative group">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-lg blur opacity-30 group-hover:opacity-60 transition duration-300"></div>
+                  <div className="relative border border-pink-500/30 rounded-lg bg-black/80 backdrop-blur-xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-pink-400" />
+                        <span className="text-pink-400 font-mono text-sm uppercase tracking-wider">
+                          MEMORY
+                        </span>
+                      </div>
+                      <div
+                        className="text-2xl font-bold text-pink-400 font-mono tabular-nums"
+                        style={{
+                          textShadow: "0 0 10px rgba(255, 0, 110, 0.8)",
+                        }}
+                      >
+                        {metrics.memory}%
+                      </div>
+                    </div>
+                    <div className="relative h-2 bg-gray-900 rounded-full overflow-hidden">
+                      <div
+                        className="absolute h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-500"
+                        style={{
+                          width: `${metrics.memory}%`,
+                          boxShadow: "0 0 10px rgba(255, 0, 110, 0.8)",
+                        }}
+                      ></div>
+                    </div>
+                    <div className="mt-2 text-xs text-gray-500 font-mono">
+                      {metrics.memory > 80 ? (
+                        <span className="text-yellow-400 flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" /> WARNING: HIGH
+                        </span>
+                      ) : (
+                        <span className="text-green-400">STATUS: OPTIMAL</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Disk */}
+                <div className="relative group">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg blur opacity-30 group-hover:opacity-60 transition duration-300"></div>
+                  <div className="relative border border-yellow-500/30 rounded-lg bg-black/80 backdrop-blur-xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <HardDrive className="w-5 h-5 text-yellow-400" />
+                        <span className="text-yellow-400 font-mono text-sm uppercase tracking-wider">
+                          DISK
+                        </span>
+                      </div>
+                      <div
+                        className="text-2xl font-bold text-yellow-400 font-mono tabular-nums"
+                        style={{
+                          textShadow: "0 0 10px rgba(255, 190, 11, 0.8)",
+                        }}
+                      >
+                        {metrics.disk}%
+                      </div>
+                    </div>
+                    <div className="relative h-2 bg-gray-900 rounded-full overflow-hidden">
+                      <div
+                        className="absolute h-full bg-gradient-to-r from-yellow-500 to-orange-500 transition-all duration-500"
+                        style={{
+                          width: `${metrics.disk}%`,
+                          boxShadow: "0 0 10px rgba(255, 190, 11, 0.8)",
+                        }}
+                      ></div>
+                    </div>
+                    <div className="mt-2 text-xs text-gray-500 font-mono">
+                      {metrics.disk > 85 ? (
+                        <span className="text-red-400 flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" /> CRITICAL
+                        </span>
+                      ) : (
+                        <span className="text-green-400">STATUS: OPTIMAL</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Network */}
+                <div className="relative group">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg blur opacity-30 group-hover:opacity-60 transition duration-300"></div>
+                  <div className="relative border border-green-500/30 rounded-lg bg-black/80 backdrop-blur-xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Network className="w-5 h-5 text-green-400" />
+                        <span className="text-green-400 font-mono text-sm uppercase tracking-wider">
+                          NETWORK
+                        </span>
+                      </div>
+                      <div
+                        className="text-2xl font-bold text-green-400 font-mono tabular-nums"
+                        style={{
+                          textShadow: "0 0 10px rgba(34, 197, 94, 0.8)",
+                        }}
+                      >
+                        {metrics.network}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm font-mono">
+                      <span className="text-cyan-400 flex items-center gap-1">
+                        <Zap className="w-3 h-3" />↑ 45 MB/s
+                      </span>
+                      <span className="text-pink-400 flex items-center gap-1">
+                        <Zap className="w-3 h-3" />↓ 79 MB/s
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 중앙: 실시간 차트 */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* CPU & Memory 차트 */}
+                <div className="relative group">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 via-pink-500 to-yellow-500 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-300"></div>
+                  <div className="relative border border-cyan-500/30 rounded-lg bg-black/80 backdrop-blur-xl p-6">
+                    <h3 className="text-lg font-bold text-cyan-400 mb-4 font-mono uppercase tracking-widest flex items-center gap-2">
+                      <Activity className="w-5 h-5" />
+                      REAL-TIME SYSTEM METRICS
+                    </h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <AreaChart data={chartData}>
+                        <defs>
+                          <linearGradient
+                            id="colorCpu"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="5%"
+                              stopColor="#00F0FF"
+                              stopOpacity={0.8}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor="#00F0FF"
+                              stopOpacity={0}
+                            />
+                          </linearGradient>
+                          <linearGradient
+                            id="colorMemory"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="5%"
+                              stopColor="#FF006E"
+                              stopOpacity={0.8}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor="#FF006E"
+                              stopOpacity={0}
+                            />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="#00F0FF"
+                          opacity={0.1}
+                        />
+                        <XAxis
+                          dataKey="time"
+                          stroke="#00F0FF"
+                          fontSize={10}
+                          fontFamily="monospace"
+                        />
+                        <YAxis
+                          stroke="#00F0FF"
+                          fontSize={10}
+                          fontFamily="monospace"
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "#000000",
+                            border: "1px solid #00F0FF",
+                            borderRadius: "8px",
+                            fontFamily: "monospace",
+                          }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="cpu"
+                          stroke="#00F0FF"
+                          fillOpacity={1}
+                          fill="url(#colorCpu)"
+                          strokeWidth={2}
+                          animationDuration={300}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="memory"
+                          stroke="#FF006E"
+                          fillOpacity={1}
+                          fill="url(#colorMemory)"
+                          strokeWidth={2}
+                          animationDuration={300}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                    <div className="flex items-center justify-center gap-6 mt-4">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-3 h-3 rounded-full bg-cyan-400"
+                          style={{
+                            boxShadow: "0 0 10px rgba(0, 240, 255, 0.8)",
+                          }}
+                        ></div>
+                        <span className="text-xs text-cyan-400 font-mono">
+                          CPU
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-3 h-3 rounded-full bg-pink-400"
+                          style={{
+                            boxShadow: "0 0 10px rgba(255, 0, 110, 0.8)",
+                          }}
+                        ></div>
+                        <span className="text-xs text-pink-400 font-mono">
+                          MEMORY
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Network 차트 */}
+                <div className="relative group">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-300"></div>
+                  <div className="relative border border-green-500/30 rounded-lg bg-black/80 backdrop-blur-xl p-6">
+                    <h3 className="text-lg font-bold text-green-400 mb-4 font-mono uppercase tracking-widest flex items-center gap-2">
+                      <Network className="w-5 h-5" />
+                      NETWORK TRAFFIC
+                    </h3>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <LineChart data={chartData}>
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="#10B981"
+                          opacity={0.1}
+                        />
+                        <XAxis
+                          dataKey="time"
+                          stroke="#10B981"
+                          fontSize={10}
+                          fontFamily="monospace"
+                        />
+                        <YAxis
+                          stroke="#10B981"
+                          fontSize={10}
+                          fontFamily="monospace"
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "#000000",
+                            border: "1px solid #10B981",
+                            borderRadius: "8px",
+                            fontFamily: "monospace",
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="network"
+                          stroke="#10B981"
+                          strokeWidth={3}
+                          dot={false}
+                          animationDuration={300}
+                          style={{
+                            filter:
+                              "drop-shadow(0 0 8px rgba(16, 185, 129, 0.8))",
+                          }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 하단 정보 */}
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 via-pink-500 to-yellow-500 rounded-lg blur opacity-20"></div>
+              <div className="relative border border-cyan-500/30 rounded-lg bg-black/80 backdrop-blur-xl p-8">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-lg bg-cyan-500/20 border border-cyan-500/50">
+                    <Zap
+                      className="w-6 h-6 text-cyan-400"
+                      style={{
+                        filter: "drop-shadow(0 0 10px rgba(0, 240, 255, 0.8))",
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-400 to-yellow-400 mb-2 font-mono uppercase tracking-wider">
+                      {"// SYSTEM STATUS: OPERATIONAL"}
+                    </h2>
+                    <p className="text-gray-400 font-mono text-sm mb-4 leading-relaxed">
+                      REAL-TIME INFRASTRUCTURE MONITORING SYSTEM v2.0 <br />
+                      POWERED BY 3 YEARS OF DATACENTER OPERATIONS EXPERIENCE{" "}
+                      <br />
+                      KT NETWORK OPERATIONS CENTER // 2019-2022
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="px-3 py-1.5 rounded-md bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 text-xs font-mono uppercase">
+                        ⚡ REAL-TIME
+                      </span>
+                      <span className="px-3 py-1.5 rounded-md bg-pink-500/20 border border-pink-500/50 text-pink-400 text-xs font-mono uppercase">
+                        🎨 CYBERPUNK
+                      </span>
+                      <span className="px-3 py-1.5 rounded-md bg-yellow-500/20 border border-yellow-500/50 text-yellow-400 text-xs font-mono uppercase">
+                        📊 LIVE CHARTS
+                      </span>
+                      <span className="px-3 py-1.5 rounded-md bg-green-500/20 border border-green-500/50 text-green-400 text-xs font-mono uppercase">
+                        🌓 DARK MODE
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </main>
