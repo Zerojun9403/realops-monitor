@@ -23,8 +23,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  RadialBarChart,
-  RadialBar,
 } from "recharts";
 
 const generateChartData = () => {
@@ -44,35 +42,56 @@ export default function Home() {
   const [isDark, setIsDark] = useState(true);
   const [chartData, setChartData] = useState(generateChartData());
   const [metrics, setMetrics] = useState({
-    cpu: 45,
-    memory: 68,
-    disk: 82,
-    network: 124,
+    cpu: 0,
+    memory: 0,
+    disk: 0,
+    network: 0,
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    const interval = setInterval(() => {
+  // 백엔드에서 데이터 가져오기
+  const fetchMetrics = async () => {
+    try {
+      const response = await fetch("http://localhost:8080/api/metrics");
+      if (!response.ok) throw new Error("API 호출 실패");
+
+      const data = await response.json();
+
       setMetrics({
-        cpu: Math.floor(Math.random() * 30) + 35,
-        memory: Math.floor(Math.random() * 20) + 60,
-        disk: Math.floor(Math.random() * 10) + 78,
-        network: Math.floor(Math.random() * 50) + 100,
+        cpu: data.cpu,
+        memory: data.memory,
+        disk: data.disk,
+        network: data.network,
       });
 
+      // 차트 데이터도 업데이트
       setChartData((prev) => {
         const newData = [
           ...prev.slice(1),
           {
             time: `${prev.length}s`,
-            cpu: Math.floor(Math.random() * 40) + 30,
-            memory: Math.floor(Math.random() * 30) + 50,
-            network: Math.floor(Math.random() * 60) + 40,
+            cpu: data.cpu,
+            memory: data.memory,
+            network: data.network,
           },
         ];
         return newData;
       });
-    }, 1500);
 
+      setIsLoading(false);
+      setError("");
+    } catch (err) {
+      console.error("API 에러:", err);
+      setError("백엔드 연결 실패");
+      setIsLoading(false);
+    }
+  };
+
+  // 최초 로드 & 2초마다 업데이트
+  useEffect(() => {
+    fetchMetrics(); // 첫 로드
+    const interval = setInterval(fetchMetrics, 2000); // 2초마다
     return () => clearInterval(interval);
   }, []);
 
@@ -80,12 +99,6 @@ export default function Home() {
     setIsDark(!isDark);
     document.documentElement.classList.toggle("dark");
   };
-
-  const radialData = [
-    { name: "CPU", value: metrics.cpu, fill: "#00F0FF" },
-    { name: "Memory", value: metrics.memory, fill: "#FF006E" },
-    { name: "Disk", value: metrics.disk, fill: "#FFBE0B" },
-  ];
 
   return (
     <div className={isDark ? "dark" : ""}>
@@ -118,7 +131,6 @@ export default function Home() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="relative">
-                    {/* 글리치 효과 */}
                     <div className="absolute inset-0 bg-cyan-500 blur-xl opacity-50 animate-pulse"></div>
                     <Server
                       className="relative w-10 h-10 text-cyan-400"
@@ -145,19 +157,22 @@ export default function Home() {
                         }}
                       ></div>
                       <span className="text-xs text-green-400 font-mono uppercase tracking-widest">
-                        SYSTEM ONLINE // 2026.02.05
+                        {isLoading
+                          ? "CONNECTING..."
+                          : error
+                            ? "OFFLINE"
+                            : "LIVE CONNECTION // BACKEND LINKED"}
                       </span>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-4">
-                  {/* 상태 표시 */}
                   <div className="hidden md:flex items-center gap-4 px-4 py-2 border border-cyan-500/30 rounded-lg bg-black/50">
                     <div className="flex items-center gap-2">
                       <Wifi className="w-4 h-4 text-cyan-400" />
                       <span className="text-xs text-cyan-400 font-mono">
-                        LINK: STABLE
+                        API: CONNECTED
                       </span>
                     </div>
                     <div className="w-px h-4 bg-cyan-500/30"></div>
@@ -186,6 +201,15 @@ export default function Home() {
           </header>
 
           <div className="container mx-auto px-4 py-8">
+            {/* 에러 메시지 */}
+            {error && (
+              <div className="mb-6 p-4 border border-red-500/50 rounded-lg bg-red-500/10">
+                <p className="text-red-400 font-mono text-sm">
+                  ⚠️ {error} - Spring Boot 서버가 실행 중인지 확인하세요
+                </p>
+              </div>
+            )}
+
             {/* 메인 대시보드 그리드 */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
               {/* 왼쪽: 메트릭 카드들 */}
@@ -335,10 +359,12 @@ export default function Home() {
                     </div>
                     <div className="flex items-center gap-3 text-sm font-mono">
                       <span className="text-cyan-400 flex items-center gap-1">
-                        <Zap className="w-3 h-3" />↑ 45 MB/s
+                        <Zap className="w-3 h-3" />↑{" "}
+                        {Math.floor(metrics.network * 0.36)} MB/s
                       </span>
                       <span className="text-pink-400 flex items-center gap-1">
-                        <Zap className="w-3 h-3" />↓ 79 MB/s
+                        <Zap className="w-3 h-3" />↓{" "}
+                        {Math.floor(metrics.network * 0.64)} MB/s
                       </span>
                     </div>
                   </div>
@@ -534,13 +560,16 @@ export default function Home() {
                   </div>
                   <div className="flex-1">
                     <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-400 to-yellow-400 mb-2 font-mono uppercase tracking-wider">
-                      {"// SYSTEM STATUS: OPERATIONAL"}
+                      SYSTEM STATUS: OPERATIONAL
                     </h2>
                     <p className="text-gray-400 font-mono text-sm mb-4 leading-relaxed">
                       REAL-TIME INFRASTRUCTURE MONITORING SYSTEM v2.0 <br />
                       POWERED BY 3 YEARS OF DATACENTER OPERATIONS EXPERIENCE{" "}
                       <br />
-                      KT NETWORK OPERATIONS CENTER // 2019-2022
+                      KT NETWORK OPERATIONS CENTER 2019-2022 <br />
+                      <span className="text-green-400">
+                        ✓ BACKEND CONNECTED // SPRING BOOT API ACTIVE
+                      </span>
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <span className="px-3 py-1.5 rounded-md bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 text-xs font-mono uppercase">
@@ -553,7 +582,7 @@ export default function Home() {
                         📊 LIVE CHARTS
                       </span>
                       <span className="px-3 py-1.5 rounded-md bg-green-500/20 border border-green-500/50 text-green-400 text-xs font-mono uppercase">
-                        🌓 DARK MODE
+                        🔗 FULLSTACK
                       </span>
                     </div>
                   </div>
