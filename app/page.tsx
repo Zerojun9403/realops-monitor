@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Moon,
   Sun,
@@ -34,8 +34,14 @@ export default function Home() {
   const { metrics, isConnected, error } = useWebSocket(
     "ws://localhost:8080/ws/metrics",
   );
-
+  // ✅ 알림 중복 방지용 ref
+  const notifiedRef = useRef({
+    cpu: false,
+    memory: false,
+    disk: false,
+  });
   // 차트 데이터 업데이트
+  // 차트 데이터 업데이트 (기존 코드)
   useEffect(() => {
     if (metrics) {
       const newDataPoint = {
@@ -54,10 +60,127 @@ export default function Home() {
 
       setChartData((prev) => {
         const updated = [...prev, newDataPoint];
-        return updated.slice(-30); // 최근 30개만 유지
+        return updated.slice(-30);
       });
     }
   }, [metrics]);
+
+  // ✅ 알림 권한 요청 (여기에 추가!)
+  useEffect(() => {
+    if ("Notification" in window) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission().then((permission) => {
+          console.log("🔔 알림 권한:", permission);
+        });
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (metrics) {
+      // CPU 체크
+      if (metrics.cpu > 70 && !notifiedRef.current.cpu) {
+        if (metrics.cpu > 85) {
+          showNotification(
+            "🚨 CPU 위험!",
+            `CPU 사용률: ${metrics.cpu}% - 즉시 확인이 필요합니다!`,
+            "critical",
+          );
+        } else {
+          showNotification(
+            "⚠️ CPU 경고",
+            `CPU 사용률: ${metrics.cpu}% - 주의가 필요합니다`,
+            "warning",
+          );
+        }
+        notifiedRef.current.cpu = true;
+
+        // 30초 후 다시 알림 가능
+        setTimeout(() => {
+          notifiedRef.current.cpu = false;
+        }, 30000);
+      }
+
+      // CPU가 정상으로 돌아오면 플래그 리셋
+      if (metrics.cpu <= 70 && notifiedRef.current.cpu) {
+        notifiedRef.current.cpu = false;
+      }
+
+      // Memory 체크
+      if (metrics.memory > 80 && !notifiedRef.current.memory) {
+        if (metrics.memory > 90) {
+          showNotification(
+            "🚨 메모리 위험!",
+            `메모리 사용률: ${metrics.memory}% - 즉시 확인 필요!`,
+            "critical",
+          );
+        } else {
+          showNotification(
+            "⚠️ 메모리 경고",
+            `메모리 사용률: ${metrics.memory}% - 확인 필요`,
+            "warning",
+          );
+        }
+        notifiedRef.current.memory = true;
+        setTimeout(() => {
+          notifiedRef.current.memory = false;
+        }, 30000);
+      }
+
+      if (metrics.memory <= 80 && notifiedRef.current.memory) {
+        notifiedRef.current.memory = false;
+      }
+
+      // Disk 체크
+      if (metrics.disk > 85 && !notifiedRef.current.disk) {
+        if (metrics.disk > 95) {
+          showNotification(
+            "🚨 디스크 위험!",
+            `디스크 사용률: ${metrics.disk}% - 긴급 조치 필요!`,
+            "critical",
+          );
+        } else {
+          showNotification(
+            "⚠️ 디스크 경고",
+            `디스크 사용률: ${metrics.disk}% - 공간 확보 필요`,
+            "warning",
+          );
+        }
+        notifiedRef.current.disk = true;
+        setTimeout(() => {
+          notifiedRef.current.disk = false;
+        }, 30000);
+      }
+
+      if (metrics.disk <= 85 && notifiedRef.current.disk) {
+        notifiedRef.current.disk = false;
+      }
+    }
+  }, [metrics]);
+
+  const showNotification = (
+    title: string,
+    body: string,
+    urgency: "warning" | "critical" = "warning",
+  ) => {
+    if (Notification.permission === "granted") {
+      const notification = new Notification(title, {
+        body,
+        tag: "metrics-alert",
+        requireInteraction: urgency === "critical",
+        silent: false,
+      });
+
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+
+      if (urgency === "warning") {
+        setTimeout(() => notification.close(), 5000);
+      }
+    }
+  };
 
   const toggleTheme = () => {
     setIsDark(!isDark);
