@@ -24,76 +24,40 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
-const generateChartData = () => {
-  const data = [];
-  for (let i = 0; i < 30; i++) {
-    data.push({
-      time: `${i}s`,
-      cpu: Math.floor(Math.random() * 40) + 30,
-      memory: Math.floor(Math.random() * 30) + 50,
-      network: Math.floor(Math.random() * 60) + 40,
-    });
-  }
-  return data;
-};
+import { useWebSocket } from "./hooks/useWebSocket";
 
 export default function Home() {
   const [isDark, setIsDark] = useState(true);
-  const [chartData, setChartData] = useState(generateChartData());
-  const [metrics, setMetrics] = useState({
-    cpu: 0,
-    memory: 0,
-    disk: 0,
-    network: 0,
-  });
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [chartData, setChartData] = useState<any[]>([]);
 
-  // 백엔드에서 데이터 가져오기
-  const fetchMetrics = async () => {
-    try {
-      const response = await fetch("http://localhost:8080/api/metrics");
-      if (!response.ok) throw new Error("API 호출 실패");
+  // ✅ WebSocket 연결
+  const { metrics, isConnected, error } = useWebSocket(
+    "ws://localhost:8080/ws/metrics",
+  );
 
-      const data = await response.json();
-
-      setMetrics({
-        cpu: data.cpu,
-        memory: data.memory,
-        disk: data.disk,
-        network: data.network,
-      });
-
-      // 차트 데이터도 업데이트
-      setChartData((prev) => {
-        const newData = [
-          ...prev.slice(1),
-          {
-            time: `${prev.length}s`,
-            cpu: data.cpu,
-            memory: data.memory,
-            network: data.network,
-          },
-        ];
-        return newData;
-      });
-
-      setIsLoading(false);
-      setError("");
-    } catch (err) {
-      console.error("API 에러:", err);
-      setError("백엔드 연결 실패");
-      setIsLoading(false);
-    }
-  };
-
-  // 최초 로드 & 2초마다 업데이트
+  // 차트 데이터 업데이트
   useEffect(() => {
-    fetchMetrics(); // 첫 로드
-    const interval = setInterval(fetchMetrics, 2000); // 2초마다
-    return () => clearInterval(interval);
-  }, []);
+    if (metrics) {
+      const newDataPoint = {
+        time: new Date(metrics.timestamp)
+          .toLocaleTimeString("en-US", {
+            hour12: false,
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          })
+          .slice(-8),
+        cpu: metrics.cpu,
+        memory: metrics.memory,
+        network: metrics.network,
+      };
+
+      setChartData((prev) => {
+        const updated = [...prev, newDataPoint];
+        return updated.slice(-30); // 최근 30개만 유지
+      });
+    }
+  }, [metrics]);
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -151,17 +115,25 @@ export default function Home() {
                     </h1>
                     <div className="flex items-center gap-2 mt-1">
                       <div
-                        className="w-2 h-2 bg-green-400 rounded-full animate-pulse"
+                        className={`w-2 h-2 rounded-full ${
+                          isConnected
+                            ? "bg-green-400 animate-pulse"
+                            : "bg-red-400"
+                        }`}
                         style={{
-                          boxShadow: "0 0 10px rgba(34, 197, 94, 0.8)",
+                          boxShadow: isConnected
+                            ? "0 0 10px rgba(34, 197, 94, 0.8)"
+                            : "0 0 10px rgba(239, 68, 68, 0.8)",
                         }}
                       ></div>
-                      <span className="text-xs text-green-400 font-mono uppercase tracking-widest">
-                        {isLoading
-                          ? "CONNECTING..."
-                          : error
-                            ? "OFFLINE"
-                            : "LIVE CONNECTION // BACKEND LINKED"}
+                      <span
+                        className={`text-xs font-mono uppercase tracking-widest ${
+                          isConnected ? "text-green-400" : "text-red-400"
+                        }`}
+                      >
+                        {isConnected
+                          ? "WEBSOCKET LIVE // REAL-TIME PUSH"
+                          : "DISCONNECTED // RECONNECTING..."}
                       </span>
                     </div>
                   </div>
@@ -170,9 +142,13 @@ export default function Home() {
                 <div className="flex items-center gap-4">
                   <div className="hidden md:flex items-center gap-4 px-4 py-2 border border-cyan-500/30 rounded-lg bg-black/50">
                     <div className="flex items-center gap-2">
-                      <Wifi className="w-4 h-4 text-cyan-400" />
-                      <span className="text-xs text-cyan-400 font-mono">
-                        API: CONNECTED
+                      <Wifi
+                        className={`w-4 h-4 ${isConnected ? "text-cyan-400" : "text-red-400"}`}
+                      />
+                      <span
+                        className={`text-xs font-mono ${isConnected ? "text-cyan-400" : "text-red-400"}`}
+                      >
+                        WS: {isConnected ? "CONNECTED" : "OFFLINE"}
                       </span>
                     </div>
                     <div className="w-px h-4 bg-cyan-500/30"></div>
@@ -205,7 +181,8 @@ export default function Home() {
             {error && (
               <div className="mb-6 p-4 border border-red-500/50 rounded-lg bg-red-500/10">
                 <p className="text-red-400 font-mono text-sm">
-                  ⚠️ {error} - Spring Boot 서버가 실행 중인지 확인하세요
+                  ⚠️ {error} - WebSocket 서버가 실행 중인지 확인하세요
+                  (ws://localhost:8080/ws/metrics)
                 </p>
               </div>
             )}
@@ -231,20 +208,20 @@ export default function Home() {
                           textShadow: "0 0 10px rgba(0, 240, 255, 0.8)",
                         }}
                       >
-                        {metrics.cpu}%
+                        {metrics?.cpu || 0}%
                       </div>
                     </div>
                     <div className="relative h-2 bg-gray-900 rounded-full overflow-hidden">
                       <div
                         className="absolute h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-500"
                         style={{
-                          width: `${metrics.cpu}%`,
+                          width: `${metrics?.cpu || 0}%`,
                           boxShadow: "0 0 10px rgba(0, 240, 255, 0.8)",
                         }}
                       ></div>
                     </div>
                     <div className="mt-2 text-xs text-gray-500 font-mono">
-                      {metrics.cpu > 70 ? (
+                      {(metrics?.cpu || 0) > 70 ? (
                         <span className="text-yellow-400 flex items-center gap-1">
                           <AlertTriangle className="w-3 h-3" /> WARNING: HIGH
                         </span>
@@ -272,20 +249,20 @@ export default function Home() {
                           textShadow: "0 0 10px rgba(255, 0, 110, 0.8)",
                         }}
                       >
-                        {metrics.memory}%
+                        {metrics?.memory || 0}%
                       </div>
                     </div>
                     <div className="relative h-2 bg-gray-900 rounded-full overflow-hidden">
                       <div
                         className="absolute h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-500"
                         style={{
-                          width: `${metrics.memory}%`,
+                          width: `${metrics?.memory || 0}%`,
                           boxShadow: "0 0 10px rgba(255, 0, 110, 0.8)",
                         }}
                       ></div>
                     </div>
                     <div className="mt-2 text-xs text-gray-500 font-mono">
-                      {metrics.memory > 80 ? (
+                      {(metrics?.memory || 0) > 80 ? (
                         <span className="text-yellow-400 flex items-center gap-1">
                           <AlertTriangle className="w-3 h-3" /> WARNING: HIGH
                         </span>
@@ -313,20 +290,20 @@ export default function Home() {
                           textShadow: "0 0 10px rgba(255, 190, 11, 0.8)",
                         }}
                       >
-                        {metrics.disk}%
+                        {metrics?.disk || 0}%
                       </div>
                     </div>
                     <div className="relative h-2 bg-gray-900 rounded-full overflow-hidden">
                       <div
                         className="absolute h-full bg-gradient-to-r from-yellow-500 to-orange-500 transition-all duration-500"
                         style={{
-                          width: `${metrics.disk}%`,
+                          width: `${metrics?.disk || 0}%`,
                           boxShadow: "0 0 10px rgba(255, 190, 11, 0.8)",
                         }}
                       ></div>
                     </div>
                     <div className="mt-2 text-xs text-gray-500 font-mono">
-                      {metrics.disk > 85 ? (
+                      {(metrics?.disk || 0) > 85 ? (
                         <span className="text-red-400 flex items-center gap-1">
                           <AlertTriangle className="w-3 h-3" /> CRITICAL
                         </span>
@@ -354,17 +331,17 @@ export default function Home() {
                           textShadow: "0 0 10px rgba(34, 197, 94, 0.8)",
                         }}
                       >
-                        {metrics.network}
+                        {metrics?.network || 0}
                       </div>
                     </div>
                     <div className="flex items-center gap-3 text-sm font-mono">
                       <span className="text-cyan-400 flex items-center gap-1">
                         <Zap className="w-3 h-3" />↑{" "}
-                        {Math.floor(metrics.network * 0.36)} MB/s
+                        {Math.floor((metrics?.network || 0) * 0.36)} MB/s
                       </span>
                       <span className="text-pink-400 flex items-center gap-1">
                         <Zap className="w-3 h-3" />↓{" "}
-                        {Math.floor(metrics.network * 0.64)} MB/s
+                        {Math.floor((metrics?.network || 0) * 0.64)} MB/s
                       </span>
                     </div>
                   </div>
@@ -560,20 +537,27 @@ export default function Home() {
                   </div>
                   <div className="flex-1">
                     <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-400 to-yellow-400 mb-2 font-mono uppercase tracking-wider">
-                      SYSTEM STATUS: OPERATIONAL
+                      SYSTEM STATUS:{" "}
+                      {isConnected ? "OPERATIONAL" : "CONNECTING"}
                     </h2>
                     <p className="text-gray-400 font-mono text-sm mb-4 leading-relaxed">
                       REAL-TIME INFRASTRUCTURE MONITORING SYSTEM v2.0 <br />
                       POWERED BY 3 YEARS OF DATACENTER OPERATIONS EXPERIENCE{" "}
                       <br />
                       KT NETWORK OPERATIONS CENTER 2019-2022 <br />
-                      <span className="text-green-400">
-                        ✓ BACKEND CONNECTED // SPRING BOOT API ACTIVE
+                      <span
+                        className={
+                          isConnected ? "text-green-400" : "text-red-400"
+                        }
+                      >
+                        {isConnected
+                          ? "✓ WEBSOCKET CONNECTED // REAL-TIME PUSH ACTIVE"
+                          : "✗ WEBSOCKET DISCONNECTED // ATTEMPTING RECONNECT"}
                       </span>
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <span className="px-3 py-1.5 rounded-md bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 text-xs font-mono uppercase">
-                        ⚡ REAL-TIME
+                        ⚡ WEBSOCKET
                       </span>
                       <span className="px-3 py-1.5 rounded-md bg-pink-500/20 border border-pink-500/50 text-pink-400 text-xs font-mono uppercase">
                         🎨 CYBERPUNK
