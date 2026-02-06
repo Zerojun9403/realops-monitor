@@ -1,49 +1,157 @@
+# 🖥️ RealOps Monitor - Frontend
 
-## Getting Started
 
-First, run the development server:
+## 🔗 Live Demo
+
+**https://realops-monitor.ddns.net**
+
+![Dashboard Screenshot](https://via.placeholder.com/800x450?text=RealOps+Monitor+Dashboard)
+
+---
+
+## ✨ 주요 기능
+
+- 🔴 **실시간 모니터링** - WebSocket으로 2초마다 메트릭 업데이트
+- 📊 **인터랙티브 차트** - CPU, Memory, Network 실시간 시각화
+- 🔔 **브라우저 알림** - 임계값 초과 시 즉시 알림
+- 🌙 **다크/라이트 모드** - 테마 전환 지원
+- 📱 **반응형 디자인** - 모바일, 태블릿, 데스크탑 지원
+
+---
+
+## 🛠️ 기술 스택
+
+| 분류 | 기술 |
+|------|------|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS |
+| Charts | Recharts |
+| Icons | Lucide React |
+| Real-time | WebSocket |
+
+---
+
+## 🚀 시작하기
+
+### 요구사항
+
+- Node.js 18+
+- npm 또는 yarn
+
+### 설치
 
 ```bash
+# 저장소 클론
+git clone https://github.com/Zerojun9403/realops-monitor.git
+cd realops-monitor
+
+# 의존성 설치
+npm install
+
+# 개발 서버 실행
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+브라우저에서 http://localhost:3000 접속
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 프로덕션 빌드
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm run start
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## ⚙️ 환경 설정
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### WebSocket 연결 URL 변경
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`app/page.tsx`에서 WebSocket URL 수정:
 
-## Deploy on Vercel
+```typescript
+// 로컬 개발
+const wsUrl = "ws://localhost:8080/ws/metrics";
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+// 프로덕션
+const wsUrl = "wss://your-domain.com/ws/metrics";
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-=======
+---
 
-# RealOps Monitor
-Real-time Operations Monitoring Dashboard
+## 📁 프로젝트 구조
 
-## Overview
-KT 데이터센터 운영 경험을 바탕으로 설계한
-실시간 서버 & 서비스 모니터링 대시보드
+```
+realops-monitor/
+├── app/
+│   ├── hooks/
+│   │   └── useWebSocket.ts    # WebSocket 커스텀 훅
+│   ├── page.tsx               # 메인 대시보드
+│   ├── layout.tsx             # 레이아웃
+│   └── globals.css            # 글로벌 스타일
+├── public/                    # 정적 파일
+├── package.json
+├── tailwind.config.ts
+└── tsconfig.json
+```
 
-## Tech Stack
-- Next.js 14 / TypeScript / Tailwind
-- Recharts / Zustand
-- Spring Boot / WebSocket / Redis
->>>>>>> f6a6b491761d872ac90e10f05adf49502a3544a5
+---
+
+## 🔌 API 연동
+
+### WebSocket 메시지 형식
+
+```json
+{
+  "cpu": 75.5,
+  "memory": 68.2,
+  "disk": 45.0,
+  "network": 120,
+  "timestamp": "2026-02-06T12:00:00"
+}
+```
+
+### REST API 엔드포인트
+
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| GET | `/api/status` | 서버 상태 확인 |
+| GET | `/api/metrics` | 현재 메트릭 조회 |
+| GET | `/api/metrics/history?period=1h` | 히스토리 조회 |
+
+---
+
+## 🎨 스크린샷
+
+### 메인 대시보드
+![Main Dashboard](https://via.placeholder.com/600x400?text=Main+Dashboard)
+
+### 실시간 차트
+![Real-time Charts](https://via.placeholder.com/600x400?text=Real-time+Charts)
+
+### 모바일 뷰
+![Mobile View](https://via.placeholder.com/300x600?text=Mobile+View)
+
+---
+
+## 🔗 관련 저장소
+
+- **Backend**: [realops-monitor-backend](https://github.com/Zerojun9403/realops-monitor-backend)
+
+---
+
+## 📄 라이선스
+
+MIT License - 자유롭게 사용하세요!
+
+---
+
+## 👨‍💻 개발자
+
+- **GitHub**: [@Zerojun9403](https://github.com/Zerojun9403)
+- **Experience**: KT 데이터센터 3년 근무 경험
+
+---
+
+⭐ 이 프로젝트가 도움이 되셨다면 Star를 눌러주세요!
