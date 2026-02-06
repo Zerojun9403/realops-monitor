@@ -31,7 +31,7 @@ export default function Home() {
   const [chartData, setChartData] = useState<any[]>([]);
 
   // ✅ WebSocket 연결
-  const wsUrl = "ws://realops-monitor.duckdns.org/ws/metrics";
+  const wsUrl = "wss://realops-monitor.ddns.net/ws/metrics";
 
   const { metrics, isConnected, error } = useWebSocket(wsUrl);
   // ✅ 알림 중복 방지용 ref
