@@ -32,7 +32,7 @@ export default function Home() {
 
   // ✅ WebSocket 연결
   const { metrics, isConnected, error } = useWebSocket(
-    "ws://localhost:8080/ws/metrics",
+    "ws://54.206.72.158:8080/ws/metrics",
   );
   // ✅ 알림 중복 방지용 ref
   const notifiedRef = useRef({
