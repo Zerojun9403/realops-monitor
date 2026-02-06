@@ -31,9 +31,9 @@ export default function Home() {
   const [chartData, setChartData] = useState<any[]>([]);
 
   // ✅ WebSocket 연결
-  const { metrics, isConnected, error } = useWebSocket(
-    "ws://54.206.72.158:8080/ws/metrics",
-  );
+  const wsUrl = "ws://realops-monitor.duckdns.org/ws/metrics";
+
+  const { metrics, isConnected, error } = useWebSocket(wsUrl);
   // ✅ 알림 중복 방지용 ref
   const notifiedRef = useRef({
     cpu: false,
@@ -305,7 +305,6 @@ export default function Home() {
               <div className="mb-6 p-4 border border-red-500/50 rounded-lg bg-red-500/10">
                 <p className="text-red-400 font-mono text-sm">
                   ⚠️ {error} - WebSocket 서버가 실행 중인지 확인하세요
-                  (ws://localhost:8080/ws/metrics)
                 </p>
               </div>
             )}
